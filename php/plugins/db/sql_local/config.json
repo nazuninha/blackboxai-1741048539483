@@ -1,0 +1,11 @@
+{
+    "name": "SQL Local File",
+    "description": "Banco de dados SQL em arquivo local com estrutura completa",
+    "version": "1.0.0",
+    "type": "sql",
+    "author": "Hiudy",
+    "requires": {
+        "php": ">=7.4",
+        "extensions": ["pdo", "pdo_mysql"]
+    }
+}
