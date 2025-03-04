@@ -1,0 +1,11 @@
+{
+    "name": "Firebase",
+    "description": "Banco de dados em tempo real do Firebase",
+    "version": "1.0.0",
+    "type": "firebase",
+    "author": "Hiudy",
+    "requires": {
+        "php": ">=7.4",
+        "extensions": ["curl"]
+    }
+}
