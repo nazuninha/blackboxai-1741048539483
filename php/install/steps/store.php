@@ -131,17 +131,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </div>
 
+<!-- Include Cropper.js for image editing -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const logoInput = document.getElementById('logo');
     const previewImg = document.getElementById('logo-preview-img');
-    
+    let cropper;
+
     logoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 previewImg.src = e.target.result;
+
+                // Initialize Cropper.js
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(previewImg, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    responsive: true,
+                    background: false,
+                    zoomable: true,
+                    scalable: true
+                });
             };
             reader.readAsDataURL(file);
         }
