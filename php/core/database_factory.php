@@ -25,13 +25,13 @@ class DatabaseFactory {
             // Use provided config or fall back to stored config
             $config = $config ?? self::$config;
             if (!$config) {
-                throw new Exception("Database configuration not initialized");
+                throw new Exception("Configuração do banco de dados não inicializada");
             }
 
             // Use provided type or get from config
             $type = $type ?? ($config['type'] ?? null);
             if (!$type) {
-                throw new Exception("Database type not specified");
+                throw new Exception("Tipo de banco de dados não especificado");
             }
 
             // Check if we already have an instance
@@ -43,7 +43,7 @@ class DatabaseFactory {
             // Validate the database type
             $plugin_path = __DIR__ . '/../plugins/db/' . $type . '/connect.php';
             if (!file_exists($plugin_path)) {
-                throw new Exception("Database type '$type' not supported");
+                throw new Exception("Tipo de banco de dados '$type' não suportado");
             }
 
             // Load the database plugin
@@ -52,13 +52,10 @@ class DatabaseFactory {
             // Get the connection
             $connection = get_connection($config);
 
-            // Check if the connection returned an error
-            if (is_array($connection) && isset($connection['success']) && !$connection['success']) {
-                return $connection;
+            // Store the instance if it's a PDO object
+            if ($connection instanceof PDO) {
+                self::$instances[$instance_key] = $connection;
             }
-
-            // Store the instance
-            self::$instances[$instance_key] = $connection;
 
             return $connection;
         } catch (Exception $e) {
@@ -77,27 +74,22 @@ class DatabaseFactory {
         try {
             // Validate query
             if (empty($query)) {
-                throw new Exception("Query cannot be empty");
+                throw new Exception("Query não pode estar vazia");
             }
-
-            // Sanitize query parameters
-            $params = ErrorHandler::sanitizeInput($params);
 
             // Check if the connection is valid
-            if (!$connection) {
-                throw new Exception("Invalid database connection");
+            if (!$connection instanceof PDO) {
+                if (is_array($connection) && isset($connection['error'])) {
+                    // If connection is an error response, return it
+                    return $connection;
+                }
+                throw new Exception("Conexão com banco de dados inválida");
             }
 
-            // Execute the query based on connection type
-            if ($connection instanceof PDO) {
-                $stmt = $connection->prepare($query);
-                $stmt->execute($params);
-                return ErrorHandler::formatSuccess($stmt);
-            } else if (method_exists($connection, 'query')) {
-                return $connection->query($query, $params);
-            } else {
-                throw new Exception("Unsupported database connection type");
-            }
+            // Execute the query
+            $stmt = $connection->prepare($query);
+            $stmt->execute($params);
+            return ErrorHandler::formatSuccess($stmt);
         } catch (Exception $e) {
             return ErrorHandler::handleError($e, ErrorHandler::ERROR_QUERY);
         }
@@ -114,7 +106,7 @@ class DatabaseFactory {
             // Validate the database type
             $plugin_path = __DIR__ . '/../plugins/db/' . $type . '/connect.php';
             if (!file_exists($plugin_path)) {
-                throw new Exception("Database type '$type' not supported");
+                throw new Exception("Tipo de banco de dados '$type' não suportado");
             }
 
             // Load the database plugin
@@ -132,6 +124,23 @@ class DatabaseFactory {
      * @return void
      */
     public static function closeAll() {
+        foreach (self::$instances as $key => $instance) {
+            if ($instance instanceof PDO) {
+                $instance = null;
+            }
+        }
         self::$instances = [];
+    }
+
+    /**
+     * Get database error info
+     * @param mixed $connection Database connection
+     * @return array Error information
+     */
+    public static function getErrorInfo($connection) {
+        if ($connection instanceof PDO) {
+            return $connection->errorInfo();
+        }
+        return ['Unknown error'];
     }
 }
