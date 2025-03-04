@@ -1,7 +1,23 @@
 <?php
+require_once __DIR__ . '/../../../core/error_handler.php';
 
 function test_database_connection($config) {
     try {
+        // Validate required configuration
+        $validation = ErrorHandler::validateInput($config, [
+            'host' => ['required' => true, 'type' => 'string'],
+            'username' => ['required' => true, 'type' => 'string'],
+            'password' => ['required' => true, 'type' => 'string'],
+            'database' => ['required' => true, 'type' => 'string']
+        ]);
+
+        if (!$validation['isValid']) {
+            throw new Exception('Configuração inválida: ' . json_encode($validation['errors']));
+        }
+
+        // Sanitize inputs
+        $config = ErrorHandler::sanitizeInput($config);
+
         $dsn = sprintf(
             "mysql:host=%s;port=%s;charset=utf8mb4",
             $config['host'],
@@ -39,58 +55,101 @@ function test_database_connection($config) {
         // Create necessary tables
         create_tables($pdo);
         
-        return $pdo;
+        return ErrorHandler::formatSuccess($pdo);
     } catch (PDOException $e) {
-        throw new Exception($e->getMessage());
+        return ErrorHandler::handleError($e, ErrorHandler::ERROR_CONNECTION);
+    } catch (Exception $e) {
+        return ErrorHandler::handleError($e, ErrorHandler::ERROR_VALIDATION);
     }
 }
 
 function create_tables($pdo) {
-    // Users table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        last_login TIMESTAMP NULL DEFAULT NULL,  // Added last_login column
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    try {
+        // Users table
+        $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            last_login TIMESTAMP NULL DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Store settings table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS store_settings (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        setting_key VARCHAR(255) NOT NULL UNIQUE,
-        setting_value TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // Store settings table
+        $pdo->exec("CREATE TABLE IF NOT EXISTS store_settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            setting_key VARCHAR(255) NOT NULL UNIQUE,
+            setting_value TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Add other necessary tables here
+    } catch (PDOException $e) {
+        throw new Exception("Erro ao criar tabelas: " . $e->getMessage());
+    }
 }
 
 function get_connection($config) {
-    static $connection = null;
-    
-    if ($connection === null) {
-        $dsn = sprintf(
-            "mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4",
-            $config['host'],
-            $config['port'] ?? '3306',
-            $config['database']
-        );
+    try {
+        static $connection = null;
         
-        $connection = new PDO(
-            $dsn,
-            $config['username'],
-            $config['password'],
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]
-        );
+        if ($connection === null) {
+            // Validate required configuration
+            $validation = ErrorHandler::validateInput($config, [
+                'host' => ['required' => true, 'type' => 'string'],
+                'username' => ['required' => true, 'type' => 'string'],
+                'password' => ['required' => true, 'type' => 'string'],
+                'database' => ['required' => true, 'type' => 'string']
+            ]);
+
+            if (!$validation['isValid']) {
+                throw new Exception('Configuração inválida: ' . json_encode($validation['errors']));
+            }
+
+            // Sanitize inputs
+            $config = ErrorHandler::sanitizeInput($config);
+
+            $dsn = sprintf(
+                "mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4",
+                $config['host'],
+                $config['port'] ?? '3306',
+                $config['database']
+            );
+            
+            $connection = new PDO(
+                $dsn,
+                $config['username'],
+                $config['password'],
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ]
+            );
+        }
+        
+        return $connection;
+    } catch (PDOException $e) {
+        return ErrorHandler::handleError($e, ErrorHandler::ERROR_CONNECTION);
+    } catch (Exception $e) {
+        return ErrorHandler::handleError($e, ErrorHandler::ERROR_VALIDATION);
     }
-    
-    return $connection;
+}
+
+/**
+ * Execute a database query safely
+ * @param PDO $pdo PDO connection
+ * @param string $query SQL query
+ * @param array $params Query parameters
+ * @return array Result with success/error information
+ */
+function execute_query($pdo, $query, $params = []) {
+    try {
+        $stmt = $pdo->prepare($query);
+        $stmt->execute($params);
+        return ErrorHandler::formatSuccess($stmt);
+    } catch (PDOException $e) {
+        return ErrorHandler::handleError($e, ErrorHandler::ERROR_QUERY);
+    }
 }
