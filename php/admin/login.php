@@ -1,50 +1,37 @@
 <?php
-session_start();
+require_once __DIR__ . '/../core/auth.php';
+require_once __DIR__ . '/../core/input.php';
+require_once __DIR__ . '/../core/response.php';
+require_once __DIR__ . '/../core/config.php';
+
+// Initialize authentication
+$auth = Auth::getInstance();
 
 // Check if user is already logged in
-if (isset($_SESSION['admin_logged_in'])) {
-    header('Location: /admin');
-    exit;
+if ($auth->isAuthenticated()) {
+    Response::redirect('/admin');
 }
 
 // Handle login form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $errors = [];
+if (Input::isPost()) {
+    $email = Input::post('email', '', [
+        'required' => true,
+        'type' => 'email'
+    ]);
+    
+    $password = Input::post('password', '', [
+        'required' => true,
+        'type' => 'string',
+        'min' => 8
+    ]);
 
-    if (empty($email) || empty($password)) {
-        $errors[] = "Todos os campos são obrigatórios.";
-    } else {
-        try {
-            // Load database configuration
-            $db_config = require __DIR__ . '/../config/database.php';
-            require_once __DIR__ . '/../plugins/db/' . $db_config['type'] . '/connect.php';
-            $pdo = get_connection($db_config['config']);
+    $result = $auth->login($email, $password);
 
-            // Check credentials
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['admin_logged_in'] = true;
-                $_SESSION['admin_id'] = $user['id'];
-                $_SESSION['admin_name'] = $user['name'];
-
-                // Update last login
-                $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
-                $stmt->execute([$user['id']]);
-
-                header('Location: /admin');
-                exit;
-            } else {
-                $errors[] = "E-mail ou senha inválidos.";
-            }
-        } catch (Exception $e) {
-            $errors[] = "Erro ao fazer login: " . $e->getMessage();
-        }
+    if ($result['success']) {
+        Response::redirect('/admin');
     }
+
+    $error = $result['error']['message'];
 }
 ?>
 <!DOCTYPE html>
@@ -151,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 0.5rem;
             border-radius: 4px;
             background: rgba(239,68,68,0.1);
+            animation: shake 0.5s ease-in-out;
         }
 
         .btn-login {
@@ -184,6 +172,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
         @media (prefers-color-scheme: dark) {
@@ -220,21 +214,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>Faça login para acessar o painel</p>
         </div>
 
-        <?php if (!empty($errors)): ?>
+        <?php if (isset($error)): ?>
             <div class="error-message">
-                <?php foreach ($errors as $error): ?>
-                    <p><?php echo htmlspecialchars($error); ?></p>
-                <?php endforeach; ?>
+                <?php echo htmlspecialchars($error); ?>
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="">
+        <form method="POST" action="" id="loginForm">
             <div class="form-group">
                 <label for="email">E-mail</label>
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
                     <input type="email" id="email" name="email" class="form-control" 
-                           value="<?php echo htmlspecialchars($email ?? ''); ?>" required>
+                           value="<?php echo htmlspecialchars(Input::post('email', '')); ?>" required>
                 </div>
             </div>
 
@@ -249,5 +241,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn-login">Entrar</button>
         </form>
     </div>
+
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
+        
+        if (password.length < 8) {
+            e.preventDefault();
+            alert('A senha deve ter no mínimo 8 caracteres.');
+            return;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            alert('Por favor, insira um e-mail válido.');
+            return;
+        }
+    });
+    </script>
 </body>
 </html>
