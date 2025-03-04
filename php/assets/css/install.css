@@ -27,7 +27,7 @@ body {
 .install-container {
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     width: 92%;
     max-width: 900px;
     padding: 2rem;
@@ -272,6 +272,7 @@ body {
 
     .btn-primary, .btn-secondary {
         width: 100%;
+        text-align: center;
     }
 
     .database-options {
