@@ -1,0 +1,25 @@
+{
+    "name": "Default Theme",
+    "description": "Tema padrão do painel administrativo",
+    "version": "1.0.0",
+    "author": "Hiudy",
+    "supports": {
+        "dark_mode": true,
+        "custom_colors": true
+    },
+    "colors": {
+        "primary": "#2563eb",
+        "secondary": "#64748b",
+        "success": "#22c55e",
+        "danger": "#ef4444",
+        "warning": "#f59e0b",
+        "info": "#3b82f6",
+        "background": "#f8fafc",
+        "text": "#1e293b"
+    },
+    "layout": {
+        "sidebar_position": "left",
+        "header_style": "centered",
+        "container_width": "fluid"
+    }
+}
