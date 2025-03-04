@@ -18,6 +18,18 @@ if (is_dir($plugins_dir)) {
     }
 }
 
+// Add JSON local database option
+$db_plugins['json_local'] = [
+    'name' => 'JSON Local',
+    'description' => 'Banco de dados local em formato JSON (não seguro, para testes)',
+];
+
+// Add Firebase option
+$db_plugins['firebase'] = [
+    'name' => 'Firebase',
+    'description' => 'Banco de dados em tempo real do Firebase',
+];
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $selected_db = $_POST['database_type'] ?? '';
@@ -109,6 +121,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="database">Nome do Arquivo do Banco:</label>
                     <input type="text" name="db_config[database]" class="form-control" required>
                     <small class="form-text text-muted">O arquivo será criado na pasta /database do sistema</small>
+                </div>
+            </div>
+
+            <!-- JSON Local Form -->
+            <div class="db-form" id="json_local_form" style="display: none;">
+                <div class="form-group">
+                    <label for="database">Nome do Arquivo JSON:</label>
+                    <input type="text" name="db_config[database]" class="form-control" required>
+                    <small class="form-text text-muted">O arquivo será criado na pasta /database do sistema</small>
+                </div>
+            </div>
+
+            <!-- Firebase Form -->
+            <div class="db-form" id="firebase_form" style="display: none;">
+                <div class="form-group">
+                    <label for="firebase_url">URL do Firebase:</label>
+                    <input type="text" name="db_config[firebase_url]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="firebase_key">Chave do Firebase:</label>
+                    <input type="text" name="db_config[firebase_key]" class="form-control" required>
                 </div>
             </div>
         </div>
