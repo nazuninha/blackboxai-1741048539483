@@ -1,5 +1,5 @@
 <div class="welcome-screen">
-    <h1>Bem-vindo ao Sistema</h1>
+    <h1>Bem-vindo ao Painel</h1>
     <div class="version">Versão Beta-0.0.1</div>
     
     <div class="credits">
@@ -19,8 +19,19 @@
         <ul>
             <li>Configurar o banco de dados</li>
             <li>Criar o usuário administrador</li>
-            <li>Configurar as informações da sua loja</li>
+            <li>Configurar as informações do painel</li>
         </ul>
+    </div>
+
+    <div class="monkey-animation">
+        <lottie-player
+            src="https://assets6.lottiefiles.com/packages/lf20_8g5g5g.json" <!-- Replace with the actual monkey animation URL -->
+            background="transparent"
+            speed="1"
+            style="width: 300px; height: 300px;"
+            loop
+            autoplay>
+        </lottie-player>
     </div>
 
     <a href="?step=database" class="btn-primary">Iniciar Instalação</a>
