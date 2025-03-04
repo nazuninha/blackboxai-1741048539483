@@ -25,7 +25,7 @@
 
     <div class="monkey-animation">
         <lottie-player
-            src="https://assets6.lottiefiles.com/packages/lf20_8g5g5g.json" <!-- Replace with the actual monkey animation URL -->
+            src="https://assets6.lottiefiles.com/packages/lf20_8g5g5g.json"
             background="transparent"
             speed="1"
             style="width: 300px; height: 300px;"
