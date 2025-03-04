@@ -1,125 +1,221 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Elements
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const mainContent = document.querySelector('.main-content');
-    const mainHeader = document.querySelector('.main-header');
-
-    // Toggle sidebar
-    sidebarToggle.addEventListener('click', function() {
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
-        mainHeader.classList.toggle('expanded');
-
-        // Store sidebar state in localStorage
-        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-    });
-
-    // Restore sidebar state from localStorage
-    if (localStorage.getItem('sidebarCollapsed') === 'true') {
-        sidebar.classList.add('collapsed');
-        mainContent.classList.add('expanded');
-        mainHeader.classList.add('expanded');
-    }
-
-    // Handle mobile sidebar
-    const mobileBreakpoint = 768;
-    
-    function handleResize() {
-        if (window.innerWidth <= mobileBreakpoint) {
-            sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('expanded');
-            mainHeader.classList.remove('expanded');
-            
-            // Add mobile-specific classes
-            sidebar.classList.add('mobile');
-            document.body.classList.add('mobile-view');
-        } else {
-            // Remove mobile-specific classes
-            sidebar.classList.remove('mobile');
-            document.body.classList.remove('mobile-view');
-            
-            // Restore desktop sidebar state
-            if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                sidebar.classList.add('collapsed');
-                mainContent.classList.add('expanded');
-                mainHeader.classList.add('expanded');
-            }
+// Theme Configuration
+const themeConfig = {
+    sidebarStorageKey: 'admin_sidebar_state',
+    dateTimeFormat: {
+        date: {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        },
+        time: {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
         }
     }
-
-    // Initial check and event listener for window resize
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
-        if (window.innerWidth <= mobileBreakpoint) {
-            const isClickInside = sidebar.contains(event.target) || 
-                                sidebarToggle.contains(event.target);
-            
-            if (!isClickInside && sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-            }
-        }
-    });
-
-    // Add smooth transitions for theme changes
-    document.documentElement.classList.add('transitions-enabled');
-});
-
-// Add smooth scrolling to all anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({
-            behavior: 'smooth'
-        });
-    });
-});
-
-// Add ripple effect to buttons
-function createRipple(event) {
-    const button = event.currentTarget;
-    const ripple = document.createElement('span');
-    const rect = button.getBoundingClientRect();
-    
-    const diameter = Math.max(rect.width, rect.height);
-    const radius = diameter / 2;
-    
-    ripple.style.width = ripple.style.height = `${diameter}px`;
-    ripple.style.left = `${event.clientX - rect.left - radius}px`;
-    ripple.style.top = `${event.clientY - rect.top - radius}px`;
-    ripple.classList.add('ripple');
-    
-    const rippleContainer = button.getElementsByClassName('ripple-container')[0] || button;
-    rippleContainer.appendChild(ripple);
-    
-    setTimeout(() => {
-        ripple.remove();
-    }, 600);
-}
-
-document.querySelectorAll('.btn-primary, .btn-secondary').forEach(button => {
-    button.addEventListener('click', createRipple);
-});
-
-// Add fade-in animation to elements when they become visible
-const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.1
 };
 
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in');
-            observer.unobserve(entry.target);
+// DOM Elements
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const currentTime = document.getElementById('currentTime');
+
+// Sidebar Toggle Functionality
+function initializeSidebar() {
+    // Load saved state
+    const savedState = localStorage.getItem(themeConfig.sidebarStorageKey);
+    if (savedState === 'collapsed') {
+        document.body.classList.add('sidebar-collapsed');
+    }
+
+    // Toggle sidebar
+    sidebarToggle?.addEventListener('click', () => {
+        document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem(
+            themeConfig.sidebarStorageKey,
+            document.body.classList.contains('sidebar-collapsed') ? 'collapsed' : 'expanded'
+        );
+    });
+
+    // Close sidebar on mobile when clicking outside
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            if (!sidebar?.contains(e.target) && !sidebarToggle?.contains(e.target)) {
+                document.body.classList.add('sidebar-collapsed');
+            }
         }
     });
-}, observerOptions);
+}
 
-document.querySelectorAll('.stat-card, .card').forEach(element => {
-    observer.observe(element);
+// Time Display Functionality
+function initializeTimeDisplay() {
+    if (!currentTime) return;
+
+    function updateTime() {
+        const now = new Date();
+        const options = {
+            ...themeConfig.dateTimeFormat.time,
+            timeZoneName: 'short'
+        };
+        currentTime.textContent = now.toLocaleTimeString(undefined, options);
+    }
+
+    updateTime();
+    setInterval(updateTime, 1000);
+}
+
+// Form Validation
+function initializeFormValidation() {
+    document.querySelectorAll('form[data-validate]').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            let isValid = true;
+            const requiredFields = form.querySelectorAll('[required]');
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                    
+                    // Create or update error message
+                    let errorMessage = field.nextElementSibling;
+                    if (!errorMessage || !errorMessage.classList.contains('error-message')) {
+                        errorMessage = document.createElement('div');
+                        errorMessage.classList.add('error-message');
+                        field.parentNode.insertBefore(errorMessage, field.nextSibling);
+                    }
+                    errorMessage.textContent = 'Este campo é obrigatório.';
+                } else {
+                    field.classList.remove('is-invalid');
+                    const errorMessage = field.nextElementSibling;
+                    if (errorMessage?.classList.contains('error-message')) {
+                        errorMessage.remove();
+                    }
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+    });
+}
+
+// Table Sorting
+function initializeTableSorting() {
+    document.querySelectorAll('table[data-sortable]').forEach(table => {
+        const headers = table.querySelectorAll('th[data-sort]');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.sort;
+                const direction = header.dataset.direction === 'asc' ? 'desc' : 'asc';
+                
+                // Remove sort direction from all headers
+                headers.forEach(h => delete h.dataset.direction);
+                
+                // Set sort direction on clicked header
+                header.dataset.direction = direction;
+
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                // Sort rows
+                rows.sort((a, b) => {
+                    const aValue = a.querySelector(`td[data-column="${column}"]`).textContent;
+                    const bValue = b.querySelector(`td[data-column="${column}"]`).textContent;
+                    
+                    return direction === 'asc' 
+                        ? aValue.localeCompare(bValue)
+                        : bValue.localeCompare(aValue);
+                });
+
+                // Update table
+                tbody.append(...rows);
+            });
+        });
+    });
+}
+
+// Notification System
+class NotificationSystem {
+    constructor() {
+        this.container = document.createElement('div');
+        this.container.className = 'notification-container';
+        document.body.appendChild(this.container);
+    }
+
+    show(message, type = 'info', duration = 5000) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+
+        this.container.appendChild(notification);
+
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 10);
+
+        // Remove notification after duration
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    }
+}
+
+// Initialize features when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSidebar();
+    initializeTimeDisplay();
+    initializeFormValidation();
+    initializeTableSorting();
+
+    // Initialize notification system
+    window.notifications = new NotificationSystem();
 });
+
+// Handle responsive behavior
+window.addEventListener('resize', () => {
+    if (window.innerWidth <= 768) {
+        document.body.classList.add('sidebar-collapsed');
+    }
+});
+
+// Add custom event listeners for dynamic content
+document.addEventListener('click', (e) => {
+    // Handle dynamic buttons
+    if (e.target.matches('[data-action]')) {
+        const action = e.target.dataset.action;
+        switch (action) {
+            case 'refresh':
+                window.location.reload();
+                break;
+            case 'back':
+                window.history.back();
+                break;
+            // Add more actions as needed
+        }
+    }
+});
+
+// Export utilities for use in other scripts
+window.adminUtils = {
+    formatDate(date) {
+        return new Date(date).toLocaleDateString(undefined, themeConfig.dateTimeFormat.date);
+    },
+    
+    formatTime(date) {
+        return new Date(date).toLocaleTimeString(undefined, themeConfig.dateTimeFormat.time);
+    },
+    
+    formatDateTime(date) {
+        return new Date(date).toLocaleString(undefined, {
+            ...themeConfig.dateTimeFormat.date,
+            ...themeConfig.dateTimeFormat.time
+        });
+    },
+
+    showNotification(message, type = 'info', duration = 5000) {
+        window.notifications?.show(message, type, duration);
+    }
+};
