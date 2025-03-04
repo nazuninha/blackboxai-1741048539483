@@ -5,7 +5,7 @@ if (!file_exists(__DIR__ . '/../../config/installed.php')) {
     exit;
 }
 
-// Load store settings
+// Load panel settings
 try {
     $db_config = require __DIR__ . '/../../config/database.php';
     require_once __DIR__ . '/../../plugins/db/' . $db_config['type'] . '/connect.php';
@@ -14,7 +14,7 @@ try {
     $stmt = $pdo->query("
         SELECT setting_key, setting_value 
         FROM store_settings 
-        WHERE setting_key IN ('store_name', 'store_logo')
+        WHERE setting_key IN ('panel_name', 'panel_logo')
     ");
     
     $settings = [];
@@ -37,9 +37,9 @@ try {
 
     <h2>Instalação Concluída!</h2>
     
-    <?php if (isset($settings['store_name'])): ?>
-        <p class="store-name">
-            <?php echo htmlspecialchars($settings['store_name']); ?>
+    <?php if (isset($settings['panel_name'])): ?>
+        <p class="panel-name">
+            <?php echo htmlspecialchars($settings['panel_name']); ?>
         </p>
     <?php endif; ?>
 
@@ -48,7 +48,7 @@ try {
         <ul>
             <li>✓ Banco de dados configurado</li>
             <li>✓ Usuário administrador criado</li>
-            <li>✓ Informações da loja salvas</li>
+            <li>✓ Informações do painel salvas</li>
         </ul>
     </div>
 
@@ -57,8 +57,8 @@ try {
         <p>Você pode agora:</p>
         <ul>
             <li>Acessar o painel administrativo</li>
-            <li>Personalizar sua loja</li>
-            <li>Começar a adicionar produtos</li>
+            <li>Personalizar seu painel</li>
+            <li>Começar a adicionar funcionalidades</li>
         </ul>
     </div>
 
@@ -129,7 +129,7 @@ try {
     }
 }
 
-.store-name {
+.panel-name {
     font-size: 24px;
     color: #333;
     margin: 20px 0;
@@ -159,16 +159,16 @@ try {
 
 .installation-summary li:before {
     content: '✓';
-    color: #4bb71b;
     position: absolute;
     left: 0;
+    color: #4bb71b;
 }
 
 .next-steps li:before {
     content: '→';
-    color: #007bff;
     position: absolute;
     left: 0;
+    color: #007bff;
 }
 
 .form-actions {
