@@ -1,0 +1,10 @@
+{
+    "name": "JSON Local",
+    "description": "Banco de dados local em formato JSON (não seguro, para testes)",
+    "version": "1.0.0",
+    "type": "json",
+    "author": "Hiudy",
+    "requires": {
+        "php": ">=7.4"
+    }
+}
