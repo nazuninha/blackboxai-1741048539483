@@ -1,0 +1,11 @@
+{
+    "name": "SQLite",
+    "description": "Banco de dados SQL local em arquivo único",
+    "version": "1.0.0",
+    "type": "sql",
+    "author": "Hiudy",
+    "requires": {
+        "php": ">=7.4",
+        "extensions": ["pdo", "pdo_sqlite"]
+    }
+}
