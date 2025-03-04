@@ -219,11 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
     width: 200px;
     height: 200px;
     border: 2px dashed #ccc;
+    border-radius: 0.75rem;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    background: #f9f9f9;
 }
 
 .logo-preview img {
