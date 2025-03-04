@@ -71,17 +71,30 @@ try {
 .finish-setup {
     text-align: center;
     padding: 20px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .success-animation {
     margin: 20px auto;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
+    position: relative;
 }
 
 .checkmark {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     display: block;
     stroke-width: 2;
@@ -130,62 +143,108 @@ try {
 }
 
 .panel-name {
-    font-size: 24px;
-    color: #333;
-    margin: 20px 0;
+    font-size: 2rem;
+    color: var(--text-color);
+    margin: 1.5rem 0;
+    font-weight: 600;
 }
 
 .installation-summary,
 .next-steps {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
+    background: var(--background-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2rem 0;
     text-align: left;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.installation-summary:hover,
+.next-steps:hover {
+    transform: translateY(-2px);
+}
+
+.installation-summary h3,
+.next-steps h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    font-size: 1.5rem;
 }
 
 .installation-summary ul,
 .next-steps ul {
     list-style: none;
     padding: 0;
+    margin: 1rem 0;
 }
 
 .installation-summary li,
 .next-steps li {
-    margin: 10px 0;
-    padding-left: 25px;
+    margin: 1rem 0;
+    padding-left: 2rem;
     position: relative;
+    font-size: 1.1rem;
 }
 
 .installation-summary li:before {
     content: '✓';
     position: absolute;
     left: 0;
-    color: #4bb71b;
+    color: var(--success-color);
+    font-weight: bold;
 }
 
 .next-steps li:before {
     content: '→';
     position: absolute;
     left: 0;
-    color: #007bff;
+    color: var(--primary-color);
+    font-weight: bold;
 }
 
 .form-actions {
-    margin-top: 30px;
+    margin-top: 3rem;
 }
 
 .btn-primary {
     display: inline-block;
-    padding: 12px 30px;
-    background: #007bff;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-hover));
     color: white;
     text-decoration: none;
-    border-radius: 25px;
-    transition: background 0.3s;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary:hover {
-    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .panel-name {
+        font-size: 1.5rem;
+    }
+
+    .installation-summary,
+    .next-steps {
+        padding: 1.5rem;
+    }
+
+    .installation-summary li,
+    .next-steps li {
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        width: 100%;
+        text-align: center;
+    }
 }
 </style>
