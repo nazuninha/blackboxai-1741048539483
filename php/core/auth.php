@@ -10,8 +10,22 @@ class Auth {
     private $lockout_duration = 900; // 15 minutes
 
     private function __construct() {
-        $this->db = DatabaseFactory::getConnection();
-        $this->initializeSession();
+        try {
+            // Load database configuration
+            $db_config = require __DIR__ . '/../config/database.php';
+            
+            // Get database connection
+            $this->db = DatabaseFactory::getConnection($db_config['type'], $db_config['config']);
+            
+            if (!$this->db instanceof PDO) {
+                throw new Exception("Falha ao conectar ao banco de dados");
+            }
+            
+            $this->initializeSession();
+        } catch (Exception $e) {
+            error_log("Auth initialization error: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     public static function getInstance() {
@@ -81,14 +95,9 @@ class Auth {
             }
 
             // Get user from database
-            $query = "SELECT * FROM users WHERE email = :email LIMIT 1";
-            $result = DatabaseFactory::executeQuery($this->db, $query, ['email' => $email]);
-
-            if (!$result['success']) {
-                throw new Exception('Erro ao verificar credenciais');
-            }
-
-            $user = $result['data']->fetch();
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+            $stmt->execute(['email' => $email]);
+            $user = $stmt->fetch();
 
             if (!$user || !password_verify($password, $user['password'])) {
                 $this->recordFailedLogin($_SERVER['REMOTE_ADDR']);
@@ -106,11 +115,8 @@ class Auth {
             $_SESSION['is_admin'] = true; // Since this is admin panel
 
             // Update last login
-            DatabaseFactory::executeQuery(
-                $this->db,
-                "UPDATE users SET last_login = NOW() WHERE id = :id",
-                ['id' => $user['id']]
-            );
+            $stmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+            $stmt->execute(['id' => $user['id']]);
 
             return ErrorHandler::formatSuccess([
                 'user_id' => $user['id'],
@@ -216,17 +222,11 @@ class Auth {
         }
 
         try {
-            $query = "SELECT id, name, email, last_login FROM users WHERE id = :id LIMIT 1";
-            $result = DatabaseFactory::executeQuery($this->db, $query, ['id' => $_SESSION['user_id']]);
-
-            if (!$result['success']) {
-                throw new Exception('Erro ao obter dados do usuário');
-            }
-
-            $user = $result['data']->fetch();
-            return $user ?: null;
+            $stmt = $this->db->prepare("SELECT id, name, email, last_login FROM users WHERE id = :id LIMIT 1");
+            $stmt->execute(['id' => $_SESSION['user_id']]);
+            return $stmt->fetch();
         } catch (Exception $e) {
-            ErrorHandler::handleError($e, ErrorHandler::ERROR_QUERY);
+            error_log("Error getting current user: " . $e->getMessage());
             return null;
         }
     }
